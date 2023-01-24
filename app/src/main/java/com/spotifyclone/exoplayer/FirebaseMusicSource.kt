@@ -1,11 +1,19 @@
 package com.spotifyclone.exoplayer
 
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.MediaMetadataCompat.*
+import androidx.core.net.toUri
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.source.ConcatenatingMediaSource
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.upstream.DefaultDataSource
 import com.spotifyclone.data.remote.MusicDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+
 
 class FirebaseMusicSource @Inject constructor(
     private val musicDatabase: MusicDatabase
@@ -33,6 +41,27 @@ class FirebaseMusicSource @Inject constructor(
 
     }
 
+    fun asMediaSource(dataSourceFactory: DefaultDataSource.Factory): ConcatenatingMediaSource {
+        val concatenatingMediaSource = ConcatenatingMediaSource()
+        songs.forEach { audio ->
+            val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                .createMediaSource(MediaItem.fromUri(audio.getString(METADATA_KEY_MEDIA_URI)))
+            concatenatingMediaSource.addMediaSource(mediaSource)
+        }
+        return concatenatingMediaSource
+    }
+
+    fun asMediaItems() = songs.map { song ->
+        val desc = MediaDescriptionCompat.Builder()
+            .setMediaUri(song.getString(METADATA_KEY_MEDIA_URI).toUri())
+            .setTitle(song.description.title)
+            .setSubtitle(song.description.subtitle)
+            .setMediaId(song.description.mediaId)
+            .setIconUri(song.description.iconUri)
+            .build()
+        MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
+    }
+
     private val onReadyListeners = mutableListOf<(Boolean) -> Unit>()
 
     private var state: State = State.STATE_CREATED
@@ -58,11 +87,27 @@ class FirebaseMusicSource @Inject constructor(
             return true
         }
     }
+
+    enum class State {
+        STATE_CREATED,
+        STATE_INITIALIZING,
+        STATE_INITIALIZED,
+        STATE_ERROR
+    }
+
+
 }
 
-enum class State {
-    STATE_CREATED,
-    STATE_INITIALIZING,
-    STATE_INITIALIZED,
-    STATE_ERROR
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
