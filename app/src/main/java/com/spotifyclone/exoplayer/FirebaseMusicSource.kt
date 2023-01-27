@@ -7,8 +7,8 @@ import android.support.v4.media.MediaMetadataCompat.*
 import androidx.core.net.toUri
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.upstream.DefaultDataSource
 import com.spotifyclone.data.remote.MusicDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,11 +41,15 @@ class FirebaseMusicSource @Inject constructor(
 
     }
 
-    fun asMediaSource(dataSourceFactory: DefaultDataSource.Factory): ConcatenatingMediaSource {
+    fun asMediaSource(dataSourceFactory: DefaultMediaSourceFactory): ConcatenatingMediaSource {
         val concatenatingMediaSource = ConcatenatingMediaSource()
-        songs.forEach { audio ->
+        songs.forEach { song ->
             val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(MediaItem.fromUri(audio.getString(METADATA_KEY_MEDIA_URI)))
+                .createMediaSource(
+                    MediaItem.fromUri(
+                        song.getString(METADATA_KEY_MEDIA_URI).toUri()
+                    )
+                )
             concatenatingMediaSource.addMediaSource(mediaSource)
         }
         return concatenatingMediaSource
@@ -60,7 +64,7 @@ class FirebaseMusicSource @Inject constructor(
             .setIconUri(song.description.iconUri)
             .build()
         MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
-    }
+    }.toMutableList()
 
     private val onReadyListeners = mutableListOf<(Boolean) -> Unit>()
 
@@ -79,12 +83,12 @@ class FirebaseMusicSource @Inject constructor(
         }
 
     fun whenReady(action: (Boolean) -> Unit): Boolean {
-        if (state == State.STATE_CREATED || state == State.STATE_INITIALIZED) {
+        return if (state == State.STATE_CREATED || state == State.STATE_INITIALIZED) {
             onReadyListeners += action
-            return false
+            false
         } else {
             action(state == State.STATE_INITIALIZED)
-            return true
+            true
         }
     }
 
