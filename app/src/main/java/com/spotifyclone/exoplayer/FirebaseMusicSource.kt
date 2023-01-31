@@ -1,14 +1,15 @@
 package com.spotifyclone.exoplayer
 
 import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.MediaMetadataCompat.*
 import androidx.core.net.toUri
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.spotifyclone.data.remote.MusicDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,18 +39,13 @@ class FirebaseMusicSource @Inject constructor(
                 .build()
         }
         state = State.STATE_INITIALIZED
-
     }
 
-    fun asMediaSource(dataSourceFactory: DefaultMediaSourceFactory): ConcatenatingMediaSource {
+    fun asMediaSource(dataSourceFactory: DefaultDataSourceFactory): ConcatenatingMediaSource {
         val concatenatingMediaSource = ConcatenatingMediaSource()
         songs.forEach { song ->
             val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(
-                    MediaItem.fromUri(
-                        song.getString(METADATA_KEY_MEDIA_URI).toUri()
-                    )
-                )
+                .createMediaSource(MediaItem.fromUri(song.getString(METADATA_KEY_MEDIA_URI)))
             concatenatingMediaSource.addMediaSource(mediaSource)
         }
         return concatenatingMediaSource
@@ -63,7 +59,7 @@ class FirebaseMusicSource @Inject constructor(
             .setMediaId(song.description.mediaId)
             .setIconUri(song.description.iconUri)
             .build()
-        MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
+        MediaBrowserCompat.MediaItem(desc, FLAG_PLAYABLE)
     }.toMutableList()
 
     private val onReadyListeners = mutableListOf<(Boolean) -> Unit>()
@@ -83,26 +79,22 @@ class FirebaseMusicSource @Inject constructor(
         }
 
     fun whenReady(action: (Boolean) -> Unit): Boolean {
-        return if (state == State.STATE_CREATED || state == State.STATE_INITIALIZED) {
+        if (state == State.STATE_CREATED || state == State.STATE_INITIALIZING) {
             onReadyListeners += action
-            false
+            return false
         } else {
             action(state == State.STATE_INITIALIZED)
-            true
+            return true
         }
     }
-
-    enum class State {
-        STATE_CREATED,
-        STATE_INITIALIZING,
-        STATE_INITIALIZED,
-        STATE_ERROR
-    }
-
-
 }
 
-
+enum class State {
+    STATE_CREATED,
+    STATE_INITIALIZING,
+    STATE_INITIALIZED,
+    STATE_ERROR
+}
 
 
 
