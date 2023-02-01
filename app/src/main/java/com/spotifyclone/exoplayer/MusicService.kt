@@ -15,7 +15,7 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.spotifyclone.data.other.Constants.MEDIA_ROOT_ID
+import com.spotifyclone.other.Constants.MEDIA_ROOT_ID
 import com.spotifyclone.exoplayer.callbacks.MusicPlaybackPreparer
 import com.spotifyclone.exoplayer.callbacks.MusicPlayerEventListener
 import com.spotifyclone.exoplayer.callbacks.MusicPlayerNotificationListener

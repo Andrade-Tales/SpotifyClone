@@ -1,4 +1,4 @@
-package com.spotifyclone.data.other
+package com.spotifyclone.other
 
 data class Resource<out T>(val status: Status, val data: T?, val message: String?) {
 

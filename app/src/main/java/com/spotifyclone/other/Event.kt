@@ -1,4 +1,4 @@
-package com.spotifyclone.data.other
+package com.spotifyclone.other
 
 open class Event<out T>(private val data: T) {
 
